@@ -27,6 +27,7 @@ package com.oracle.svm.core.posix;
 import static com.oracle.svm.core.posix.headers.Mman.MAP_ANON;
 import static com.oracle.svm.core.posix.headers.Mman.MAP_FAILED;
 import static com.oracle.svm.core.posix.headers.Mman.MAP_FIXED;
+import static com.oracle.svm.core.posix.headers.Mman.MAP_HUGETLB;
 import static com.oracle.svm.core.posix.headers.Mman.MAP_JIT;
 import static com.oracle.svm.core.posix.headers.Mman.MAP_NORESERVE;
 import static com.oracle.svm.core.posix.headers.Mman.MAP_PRIVATE;
@@ -48,6 +49,7 @@ import org.graalvm.word.PointerBase;
 import org.graalvm.word.UnsignedWord;
 import org.graalvm.word.WordBase;
 
+import com.oracle.svm.core.SubstrateOptions;
 import com.oracle.svm.core.Uninterruptible;
 import com.oracle.svm.core.c.CGlobalData;
 import com.oracle.svm.core.c.CGlobalDataFactory;
@@ -78,7 +80,7 @@ public class PosixVirtualMemoryProvider implements VirtualMemoryProvider {
     public static UnsignedWord getPageSize() {
         Word value = CACHED_PAGE_SIZE.get().read();
         if (value.equal(Word.zero())) {
-            long queried = Unistd.NoTransitions.sysconf(Unistd._SC_PAGE_SIZE());
+            long queried = SubstrateOptions.UseLargePages.getValue() ? SubstrateOptions.getPageSize() : Unistd.NoTransitions.sysconf(Unistd._SC_PAGE_SIZE());
             value = Word.unsigned(queried);
             CACHED_PAGE_SIZE.get().write(value);
         }
@@ -167,6 +169,9 @@ public class PosixVirtualMemoryProvider implements VirtualMemoryProvider {
         }
 
         int flags = MAP_ANON() | MAP_PRIVATE();
+        if (SubstrateOptions.UseLargePages.getValue()) {
+            flags |= MAP_HUGETLB();
+        }
         if (start.isNonNull()) {
             flags |= MAP_FIXED();
         }

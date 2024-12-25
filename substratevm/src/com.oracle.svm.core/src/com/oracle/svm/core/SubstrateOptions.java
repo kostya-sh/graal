@@ -566,6 +566,9 @@ public class SubstrateOptions {
     @Option(help = "Deprecated, has no effect.", deprecated = true) //
     public static final HostedOptionKey<Long> InternalThreadStackSize = new HostedOptionKey<>(0L);
 
+    @Option(help = "Use huge pages", type = OptionType.User) //
+    public static final HostedOptionKey<Boolean> UseLargePages = new HostedOptionKey<>(false);
+
     /**
      * Cached value of {@link ConcealedOptions#MaxJavaStackTraceDepth}. Also used as default value.
      */
